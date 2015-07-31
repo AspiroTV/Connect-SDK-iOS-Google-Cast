@@ -24,7 +24,7 @@
 
 @interface CastWebAppSession () <GCKMediaControlChannelDelegate>
 {
-    MediaPlayStateSuccessBlock _immediatePlayStateCallback;
+    MediaPlayStateWithReasonSuccessBlock _immediatePlayStateCallback;
 
     ServiceSubscription *_playStateSubscription;
     ServiceSubscription *_mediaInfoSubscription;
@@ -154,15 +154,64 @@
 
 - (void)mediaControlChannelDidUpdateStatus:(GCKMediaControlChannel *)mediaControlChannel
 {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+	NSString *playerState = @"";
+	switch (mediaControlChannel.mediaStatus.playerState) {
+		case GCKMediaPlayerStateUnknown:
+			playerState = @"Unknown";
+			break;
+		case GCKMediaPlayerStateIdle:
+			playerState = @"Idle";
+			break;
+		case GCKMediaPlayerStatePlaying:
+			playerState = @"Playing";
+			break;
+		case GCKMediaPlayerStatePaused:
+			playerState = @"Paused";
+			break;
+		case GCKMediaPlayerStateBuffering:
+			playerState = @"Buffering";
+			break;
+	}
+	NSLog(@"CAST PLAYER STATUS: %@", playerState);
+	
     MediaControlPlayState playState;
+	MediaControlIdleReason idleReason;
+	idleReason = MediaControlIdleReasonNone;
 
     switch (mediaControlChannel.mediaStatus.playerState)
     {
-        case GCKMediaPlayerStateIdle:
-            if (mediaControlChannel.mediaStatus.idleReason == GCKMediaPlayerIdleReasonFinished)
-                playState = MediaControlPlayStateFinished;
-            else
-                playState = MediaControlPlayStateIdle;
+        case GCKMediaPlayerStateIdle: {
+			playState = MediaControlPlayStateIdle;
+			
+			switch (mediaControlChannel.mediaStatus.idleReason) {
+				case GCKMediaPlayerIdleReasonNone: {
+					NSLog(@"IDLE REASON: GCKMediaPlayerIdleReasonNone");
+					idleReason = MediaControlIdleReasonNone;
+				}
+					break;
+				case GCKMediaPlayerIdleReasonFinished: {
+					idleReason = MediaControlIdleReasonFinished;
+					NSLog(@"IDLE REASON: GCKMediaPlayerIdleReasonFinished");
+				}
+					break;
+				case GCKMediaPlayerIdleReasonCancelled: {
+					idleReason = MediaControlIdleReasonCancelled;
+					NSLog(@"IDLE REASON: GCKMediaPlayerIdleReasonCancelled");
+				}
+					break;
+				case GCKMediaPlayerIdleReasonInterrupted: {
+					idleReason = MediaControlIdleReasonInterrupted;
+					NSLog(@"IDLE REASON: GCKMediaPlayerIdleReasonInterrupted");
+				}
+					break;
+				case GCKMediaPlayerIdleReasonError: {
+					idleReason = MediaControlIdleReasonError;
+					NSLog(@"IDLE REASON: GCKMediaPlayerIdleReasonError");
+				}
+					break;
+			}
+		}
             break;
 
         case GCKMediaPlayerStatePlaying:
@@ -184,8 +233,11 @@
 
     if (_immediatePlayStateCallback)
     {
-        _immediatePlayStateCallback(playState);
+        _immediatePlayStateCallback(playState, idleReason);
         _immediatePlayStateCallback = nil;
+	} else {
+		NSLog(@"UNEXPECTED CAST PLAYER STATUS UPDATE");
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastPlayerStateChanged" object:nil userInfo:@{@"playState": @(playState), @"idleReason": @(idleReason)}];
     }
 
     if (_playStateSubscription)
@@ -210,6 +262,30 @@
              }
          }];
     }
+}
+
+- (void)mediaControlChannel:(GCKMediaControlChannel *)mediaControlChannel didCompleteLoadWithSessionID:(NSInteger)sessionID {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+	NSLog(@"Finished loading with sessionID: %li", (long)sessionID);
+}
+
+- (void)mediaControlChannel:(GCKMediaControlChannel *)mediaControlChannel didFailToLoadMediaWithError:(NSError *)error {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+	NSLog(@"Error: %@", error);
+}
+
+- (void)mediaControlChannelDidUpdateMetadata:(GCKMediaControlChannel *)mediaControlChannel {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+}
+
+- (void)mediaControlChannel:(GCKMediaControlChannel *)mediaControlChannel requestDidCompleteWithID:(NSInteger)requestID {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+	NSLog(@"Completed requestID: %li", (long)requestID);
+}
+
+- (void)mediaControlChannel:(GCKMediaControlChannel *)mediaControlChannel requestDidFailWithID:(NSInteger)requestID error:(NSError *)error {
+	NSLog(@"%d %s", __LINE__, __PRETTY_FUNCTION__);
+	NSLog(@"error: %@", error);
 }
 
 #pragma mark - Media Player
@@ -346,27 +422,31 @@
     }
 }
 
+- (void)getPlayStateWithReasonWithSuccess:(MediaPlayStateWithReasonSuccessBlock)success failure:(FailureBlock)failure {
+	if (!self.service.castMediaControlChannel.mediaStatus)
+	{
+		if (failure)
+			failure([ConnectError generateErrorWithCode:ConnectStatusCodeError andDetails:@"There is no media currently available"]);
+		
+		return;
+	}
+	
+	_immediatePlayStateCallback = success;
+	
+	NSInteger result = [self.service.castMediaControlChannel requestStatus];
+	
+	if (result == kGCKInvalidRequestID)
+	{
+		_immediatePlayStateCallback = nil;
+		
+		if (failure)
+			failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+	}
+}
+
 - (void)getPlayStateWithSuccess:(MediaPlayStateSuccessBlock)success failure:(FailureBlock)failure
 {
-    if (!self.service.castMediaControlChannel.mediaStatus)
-    {
-        if (failure)
-            failure([ConnectError generateErrorWithCode:ConnectStatusCodeError andDetails:@"There is no media currently available"]);
-
-        return;
-    }
-
-    _immediatePlayStateCallback = success;
-
-    NSInteger result = [self.service.castMediaControlChannel requestStatus];
-
-    if (result == kGCKInvalidRequestID)
-    {
-        _immediatePlayStateCallback = nil;
-
-        if (failure)
-            failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
-    }
+	//for chromecast we are using custom getPlayStateWithReasonWithSuccess method
 }
 
 - (ServiceSubscription *)subscribePlayStateWithSuccess:(MediaPlayStateSuccessBlock)success failure:(FailureBlock)failure

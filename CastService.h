@@ -45,4 +45,6 @@
 - (void) playMedia:(GCKMediaInformation *)mediaInformation webAppId:(NSString *)webAppId success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure;
 // @endcond
 
+- (void) playMedia:(GCKMediaInformation *)mediaInformation position:(NSTimeInterval)position webAppId:(NSString *)webAppId success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure;
+
 @end

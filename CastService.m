@@ -28,6 +28,8 @@
 
 @interface CastService () <ServiceCommandDelegate>
 
+@property (nonatomic, retain) GCKCastChannel *castPrivateChannel;
+
 @end
 
 @implementation CastService
@@ -163,7 +165,25 @@
 
 - (void)disconnect
 {
-    if (!self.connected)
+	[self disconnect:nil];
+}
+
+- (void)disconnectAndTerminateApplication {
+	if (!self.connected)
+		return;
+	
+	self.connected = NO;
+	
+	[_castDeviceManager stopApplication];
+	[_castDeviceManager disconnect];
+	
+	if (self.delegate && [self.delegate respondsToSelector:@selector(deviceService:disconnectedWithError:)])
+		dispatch_on_main(^{ [self.delegate deviceService:self disconnectedWithError:nil]; });
+}
+
+- (void)disconnect:(NSError *)error
+{
+    if (!self.connected && !error)
         return;
 
     self.connected = NO;
@@ -172,7 +192,7 @@
     [_castDeviceManager disconnect];
 
     if (self.delegate && [self.delegate respondsToSelector:@selector(deviceService:disconnectedWithError:)])
-        dispatch_on_main(^{ [self.delegate deviceService:self disconnectedWithError:nil]; });
+        dispatch_on_main(^{ [self.delegate deviceService:self disconnectedWithError:error]; });
 }
 
 #pragma mark - Subscriptions
@@ -200,9 +220,16 @@
     DLog(@"connected");
 
     self.connected = YES;
+//	[_castDeviceManager stopApplication]; //since we need to join our app (if it's running)
 
     _castMediaControlChannel = [[GCKMediaControlChannel alloc] init];
     [_castDeviceManager addChannel:_castMediaControlChannel];
+	
+	Class channelClass = NSClassFromString(@"HACastChannel");
+	if (channelClass) {
+		_castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
+		[_castDeviceManager addChannel:_castPrivateChannel];
+	}
 
     dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; });
 }
@@ -237,6 +264,13 @@
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didDisconnectFromApplicationWithError:(NSError *)error
 {
     DLog(@"%@", error.localizedDescription);
+	
+	NSDictionary *dict = nil;
+	if (error) {
+		dict = @{@"error": error};
+	}
+	
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastDeviceApplicationDisconnected" object:nil userInfo:dict];
 
     if (!_currentAppId)
         return;
@@ -270,8 +304,8 @@
 {
     DLog(@"%@", error.localizedDescription);
 
-    if (self.connected)
-        [self disconnect];
+    if (self.connected || error)
+        [self disconnect:error];
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didFailToStopApplicationWithError:(NSError *)error
@@ -455,46 +489,168 @@
     [self playMedia:mediaInformation webAppId:self.castWebAppId success:success failure:failure];
 }
 
+- (void)playMedia:(NSURL *)videoURL contentDetails:(HACastContentDetails *)contentDetails position:(NSTimeInterval)position success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure
+{
+	GCKMediaMetadata *metaData = [[GCKMediaMetadata alloc] initWithMetadataType:GCKMediaMetadataTypeMovie];
+	[metaData setString:contentDetails.contentTitle forKey:kGCKMetadataKeyTitle];
+	[metaData setString:contentDetails.contentDescription forKey:kGCKMetadataKeySubtitle];
+	[metaData setString:contentDetails.contentId forKey:@"contentId"];
+	[metaData setString:contentDetails.sessionId forKey:@"sessionId"];
+	[metaData setString:contentDetails.encryptedUsername forKey:@"encrypted_username"];
+	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
+	[metaData setString:contentDetails.config forKey:@"config"];
+	
+	if (contentDetails.contentImage)
+	{
+		GCKImage *iconImage = [[GCKImage alloc] initWithURL:[NSURL URLWithString:contentDetails.contentImage] width:100 height:100];
+		[metaData addImage:iconImage];
+	}
+	
+	GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:videoURL.absoluteString streamType:GCKMediaStreamTypeBuffered contentType:@"video/mp4" metadata:metaData streamDuration:1000 customData:nil];
+	
+	NSString *receiverID = self.castWebAppId;
+	
+	if (position > 1) {
+		[self playMedia:mediaInformation position:position webAppId:receiverID success:success failure:failure];
+	} else {
+		[self playMedia:mediaInformation webAppId:receiverID success:success failure:failure];
+	}
+}
+
 - (void) playMedia:(GCKMediaInformation *)mediaInformation webAppId:(NSString *)mediaAppId success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure
 {
-    WebAppLaunchSuccessBlock webAppLaunchBlock = ^(WebAppSession *webAppSession)
-    {
-        NSInteger result = [_castMediaControlChannel loadMedia:mediaInformation autoplay:YES];
+	if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && _castMediaControlChannel) {
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ //we need this delay otherwise video is not loaded properly
+			NSInteger result = [_castMediaControlChannel loadMedia:mediaInformation autoplay:YES];
+			
+			if (result == kGCKInvalidRequestID) {
+				if (failure) {
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+				}
+			} else {
+				if (success) {
+					success(nil);
+				}
+			}
+		});
+	} else {
+		WebAppLaunchSuccessBlock webAppLaunchBlock = ^(WebAppSession *webAppSession)
+		{
+			NSInteger result = [_castMediaControlChannel loadMedia:mediaInformation autoplay:YES];
+			
+			if (result == kGCKInvalidRequestID)
+			{
+				if (failure)
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+			} else
+			{
+				webAppSession.launchSession.sessionType = LaunchSessionTypeMedia;
+				
+				_castMediaControlChannel.delegate = (CastWebAppSession *) webAppSession;
+				
+				if (success) {
+					MediaLaunchObject *launchObject = [[MediaLaunchObject alloc] initWithLaunchSession:webAppSession.launchSession andMediaControl:webAppSession.mediaControl];
+					success(launchObject);
+				}
+			}
+		};
+		
+		_launchingAppId = mediaAppId;
+		
+		[_launchSuccessBlocks setObject:webAppLaunchBlock forKey:mediaAppId];
+		
+		if (failure)
+			[_launchFailureBlocks setObject:failure forKey:mediaAppId];
+		
+		BOOL relaunchIfRunning = NO;
+		
+		if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && [mediaAppId isEqualToString:_currentAppId])
+			relaunchIfRunning = NO;
+		else
+			relaunchIfRunning = YES;
+		
+		relaunchIfRunning = NO; //since we need to join our app (if it's running)
+		
+		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+		BOOL result = result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
+		
+		if (!result)
+		{
+			[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+			[_launchFailureBlocks removeObjectForKey:mediaAppId];
+			
+			if (failure)
+				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+		}
+	}
+}
 
-        if (result == kGCKInvalidRequestID)
-        {
-            if (failure)
-                failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
-        } else
-        {
-            webAppSession.launchSession.sessionType = LaunchSessionTypeMedia;
-
-            _castMediaControlChannel.delegate = (CastWebAppSession *) webAppSession;
-
-            if (success){
-                    MediaLaunchObject *launchObject = [[MediaLaunchObject alloc] initWithLaunchSession:webAppSession.launchSession andMediaControl:webAppSession.mediaControl];
-                    success(launchObject);
-            }
-        }
-    };
-
-    _launchingAppId = mediaAppId;
-
-    [_launchSuccessBlocks setObject:webAppLaunchBlock forKey:mediaAppId];
-
-    if (failure)
-        [_launchFailureBlocks setObject:failure forKey:mediaAppId];
-
-    BOOL result = [_castDeviceManager launchApplication:mediaAppId relaunchIfRunning:NO];
-
-    if (!result)
-    {
-        [_launchSuccessBlocks removeObjectForKey:mediaAppId];
-        [_launchFailureBlocks removeObjectForKey:mediaAppId];
-
-        if (failure)
-            failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
-    }
+- (void) playMedia:(GCKMediaInformation *)mediaInformation position:(NSTimeInterval)position webAppId:(NSString *)mediaAppId success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure
+{
+	if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && _castMediaControlChannel) {
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ //we need this delay otherwise video is not loaded properly
+			NSInteger result = [_castMediaControlChannel loadMedia:mediaInformation autoplay:YES playPosition:position];
+			
+			if (result == kGCKInvalidRequestID) {
+				if (failure) {
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+				}
+			} else {
+				if (success) {
+					success(nil);
+				}
+			}
+		});
+	} else {
+		WebAppLaunchSuccessBlock webAppLaunchBlock = ^(WebAppSession *webAppSession)
+		{
+			NSInteger result = [_castMediaControlChannel loadMedia:mediaInformation autoplay:YES playPosition:position];
+			
+			if (result == kGCKInvalidRequestID)
+			{
+				if (failure)
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+			} else
+			{
+				webAppSession.launchSession.sessionType = LaunchSessionTypeMedia;
+				
+				_castMediaControlChannel.delegate = (CastWebAppSession *) webAppSession;
+				
+				if (success) {
+					MediaLaunchObject *launchObject = [[MediaLaunchObject alloc] initWithLaunchSession:webAppSession.launchSession andMediaControl:webAppSession.mediaControl];
+					success(launchObject);
+				}
+			}
+		};
+		
+		_launchingAppId = mediaAppId;
+		
+		[_launchSuccessBlocks setObject:webAppLaunchBlock forKey:mediaAppId];
+		
+		if (failure)
+			[_launchFailureBlocks setObject:failure forKey:mediaAppId];
+		
+		BOOL relaunchIfRunning = NO;
+		
+		if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && [mediaAppId isEqualToString:_currentAppId])
+			relaunchIfRunning = NO;
+		else
+			relaunchIfRunning = YES;
+		
+		relaunchIfRunning = NO; //since we need to join our app (if it's running)
+		
+		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+		BOOL result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
+		
+		if (!result)
+		{
+			[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+			[_launchFailureBlocks removeObjectForKey:mediaAppId];
+			
+			if (failure)
+				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+		}
+	}
 }
 
 - (void)closeMedia:(LaunchSession *)launchSession success:(SuccessBlock)success failure:(FailureBlock)failure
@@ -510,6 +666,37 @@
         if (failure)
             failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
     }
+}
+
+- (void)joinCastingApp:(WebAppJoinCastingSuccessBlock)success failure:(FailureBlock)failure {
+	WebAppLaunchSuccessBlock webAppLaunchBlock = ^(WebAppSession *webAppSession) {
+		webAppSession.launchSession.sessionType = LaunchSessionTypeMedia;
+		_castMediaControlChannel.delegate = (CastWebAppSession *) webAppSession;
+		if (success) {
+			success(webAppSession.mediaControl);
+		}
+	};
+	
+	NSString *mediaAppId = self.castWebAppId;
+	
+	_launchingAppId = mediaAppId;
+	
+	[_launchSuccessBlocks setObject:webAppLaunchBlock forKey:mediaAppId];
+	
+	if (failure) {
+		[_launchFailureBlocks setObject:failure forKey:mediaAppId];
+	}
+	
+	BOOL result = [_castDeviceManager joinApplication:mediaAppId];
+	
+	if (!result) {
+		[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+		[_launchFailureBlocks removeObjectForKey:mediaAppId];
+		
+		if (failure) {
+			failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+		}
+	}
 }
 
 #pragma mark - Media Control
@@ -639,7 +826,8 @@
 
     _launchingAppId = webAppId;
 
-    BOOL result = [_castDeviceManager launchApplication:webAppId relaunchIfRunning:relaunchIfRunning];
+	GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+	BOOL result = [_castDeviceManager launchApplication:webAppId withLaunchOptions:lauchOptions];
 
     if (!result)
     {
@@ -670,6 +858,7 @@
     {
         SuccessBlock joinSuccess = ^(id responseObject)
         {
+			_castMediaControlChannel.delegate = (CastWebAppSession *) webAppSession;
             if (success)
                 success(webAppSession);
         };
