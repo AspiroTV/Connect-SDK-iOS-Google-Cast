@@ -100,7 +100,7 @@
     ServiceDescription *serviceDescription = [ServiceDescription descriptionWithAddress:device.ipAddress UUID:device.deviceID];
     serviceDescription.serviceId = kConnectSDKCastServiceId;
     serviceDescription.friendlyName = device.friendlyName;
-	serviceDescription.castingName = @"kCastDeviceNameChromecast";
+	serviceDescription.castingName = @"chromecast_cast";
     serviceDescription.port = device.servicePort;
     serviceDescription.manufacturer = device.manufacturer;
     serviceDescription.modelName = device.modelName;

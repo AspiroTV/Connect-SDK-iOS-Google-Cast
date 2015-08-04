@@ -570,18 +570,21 @@
 			relaunchIfRunning = YES;
 		
 		relaunchIfRunning = NO; //since we need to join our app (if it's running)
-		
-		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
-		BOOL result = result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
-		
-		if (!result)
-		{
-			[_launchSuccessBlocks removeObjectForKey:mediaAppId];
-			[_launchFailureBlocks removeObjectForKey:mediaAppId];
+
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+			BOOL result = result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
 			
-			if (failure)
-				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
-		}
+			if (!result)
+			{
+				[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+				[_launchFailureBlocks removeObjectForKey:mediaAppId];
+				
+				if (failure)
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+			}
+		});
+
 	}
 }
 
@@ -639,17 +642,19 @@
 		
 		relaunchIfRunning = NO; //since we need to join our app (if it's running)
 		
-		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
-		BOOL result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
-		
-		if (!result)
-		{
-			[_launchSuccessBlocks removeObjectForKey:mediaAppId];
-			[_launchFailureBlocks removeObjectForKey:mediaAppId];
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+			BOOL result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
 			
-			if (failure)
-				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
-		}
+			if (!result)
+			{
+				[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+				[_launchFailureBlocks removeObjectForKey:mediaAppId];
+				
+				if (failure)
+					failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+			}
+		});
 	}
 }
 
@@ -687,16 +692,18 @@
 		[_launchFailureBlocks setObject:failure forKey:mediaAppId];
 	}
 	
-	BOOL result = [_castDeviceManager joinApplication:mediaAppId];
-	
-	if (!result) {
-		[_launchSuccessBlocks removeObjectForKey:mediaAppId];
-		[_launchFailureBlocks removeObjectForKey:mediaAppId];
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		BOOL result = [_castDeviceManager joinApplication:mediaAppId];
 		
-		if (failure) {
-			failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+		if (!result) {
+			[_launchSuccessBlocks removeObjectForKey:mediaAppId];
+			[_launchFailureBlocks removeObjectForKey:mediaAppId];
+			
+			if (failure) {
+				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:nil]);
+			}
 		}
-	}
+	});
 }
 
 #pragma mark - Media Control
@@ -825,19 +832,21 @@
         [_launchFailureBlocks setObject:failure forKey:webAppId];
 
     _launchingAppId = webAppId;
-
-	GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
-	BOOL result = [_castDeviceManager launchApplication:webAppId withLaunchOptions:lauchOptions];
-
-    if (!result)
-    {
-        [_launchSuccessBlocks removeObjectForKey:webAppId];
-        [_launchFailureBlocks removeObjectForKey:webAppId];
-        _launchingAppId = nil;
-
-        if (failure)
-            failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:@"Could not detect if web app launched -- make sure you have the Google Cast Receiver JavaScript file in your web app"]);
-    }
+	
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+		BOOL result = [_castDeviceManager launchApplication:webAppId withLaunchOptions:lauchOptions];
+		
+		if (!result)
+		{
+			[_launchSuccessBlocks removeObjectForKey:webAppId];
+			[_launchFailureBlocks removeObjectForKey:webAppId];
+			_launchingAppId = nil;
+			
+			if (failure)
+				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:@"Could not detect if web app launched -- make sure you have the Google Cast Receiver JavaScript file in your web app"]);
+		}
+	});
 }
 
 - (void)launchWebApp:(NSString *)webAppId params:(NSDictionary *)params success:(WebAppLaunchSuccessBlock)success failure:(FailureBlock)failure
@@ -873,17 +882,20 @@
 
     _launchingAppId = webAppLaunchSession.appId;
 
-    BOOL result = [_castDeviceManager joinApplication:webAppLaunchSession.appId];
-
-    if (!result)
-    {
-        [_launchSuccessBlocks removeObjectForKey:webAppLaunchSession.appId];
-        [_launchFailureBlocks removeObjectForKey:webAppLaunchSession.appId];
-        _launchingAppId = nil;
-
-        if (failure)
-            failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:@"Could not detect if web app launched -- make sure you have the Google Cast Receiver JavaScript file in your web app"]);
-    }
+	
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		BOOL result = [_castDeviceManager joinApplication:webAppLaunchSession.appId];
+		
+		if (!result)
+		{
+			[_launchSuccessBlocks removeObjectForKey:webAppLaunchSession.appId];
+			[_launchFailureBlocks removeObjectForKey:webAppLaunchSession.appId];
+			_launchingAppId = nil;
+			
+			if (failure)
+				failure([ConnectError generateErrorWithCode:ConnectStatusCodeTvError andDetails:@"Could not detect if web app launched -- make sure you have the Google Cast Receiver JavaScript file in your web app"]);
+		}
+	});
 }
 
 - (void) joinWebAppWithId:(NSString *)webAppId success:(WebAppLaunchSuccessBlock)success failure:(FailureBlock)failure
