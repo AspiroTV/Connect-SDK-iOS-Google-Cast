@@ -495,6 +495,8 @@
 	[metaData setString:contentDetails.contentTitle forKey:kGCKMetadataKeyTitle];
 	[metaData setString:contentDetails.contentDescription forKey:kGCKMetadataKeySubtitle];
 	[metaData setString:contentDetails.contentId forKey:@"contentId"];
+	[metaData setString:contentDetails.uuid forKey:@"uuid"];
+	[metaData setString:contentDetails.friendlyName forKey:@"friendly_name"];
 	[metaData setString:contentDetails.sessionId forKey:@"sessionId"];
 	[metaData setString:contentDetails.encryptedUsername forKey:@"encrypted_username"];
 	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
