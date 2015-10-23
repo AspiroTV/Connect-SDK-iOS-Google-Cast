@@ -73,8 +73,8 @@
         });
     }
     
-    _devices = [NSMutableDictionary new];
-    _deviceDescriptions = [NSMutableDictionary new];
+//    _devices = [NSMutableDictionary new]; //commenting this out since we need to notify if device becone offline while app is in background
+//    _deviceDescriptions = [NSMutableDictionary new];
 }
 
 - (BOOL) isEmpty
