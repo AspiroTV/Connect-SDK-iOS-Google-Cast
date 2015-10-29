@@ -220,18 +220,29 @@
     DLog(@"connected");
 
     self.connected = YES;
-//	[_castDeviceManager stopApplication]; //since we need to join our app (if it's running)
-
-    _castMediaControlChannel = [[GCKMediaControlChannel alloc] init];
-    [_castDeviceManager addChannel:_castMediaControlChannel];
 	
-	Class channelClass = NSClassFromString(@"HACastChannel");
-	if (channelClass) {
-		_castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
-		[_castDeviceManager addChannel:_castPrivateChannel];
-	}
-
-    dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; });
+	BOOL relaunchIfRunning = NO;
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
+		NSInteger result = [_castDeviceManager launchApplication:self.castWebAppId withLaunchOptions:lauchOptions];
+		if (result) {
+			dispatch_on_main(^{
+				[self.delegate deviceService:self didFailConnectWithError:[NSError errorWithDomain:ConnectErrorDomain code:0 userInfo:nil]];
+			});
+			return;
+		}
+		
+		_castMediaControlChannel = [[GCKMediaControlChannel alloc] init];
+		[_castDeviceManager addChannel:_castMediaControlChannel];
+		
+		Class channelClass = NSClassFromString(@"HACastChannel");
+		if (channelClass) {
+			_castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
+			[_castDeviceManager addChannel:_castPrivateChannel];
+		}
+		
+		dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; });
+	});
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didConnectToCastApplication:(GCKApplicationMetadata *)applicationMetadata sessionID:(NSString *)sessionID launchedApplication:(BOOL)launchedApplication
