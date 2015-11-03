@@ -224,8 +224,8 @@
 	BOOL relaunchIfRunning = NO;
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
-		NSInteger result = [_castDeviceManager launchApplication:self.castWebAppId withLaunchOptions:lauchOptions];
-		if (result) {
+		BOOL result = [_castDeviceManager launchApplication:self.castWebAppId withLaunchOptions:lauchOptions];
+		if (!result) {
 			dispatch_on_main(^{
 				[self.delegate deviceService:self didFailConnectWithError:[NSError errorWithDomain:ConnectErrorDomain code:0 userInfo:nil]];
 			});
@@ -586,7 +586,7 @@
 
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 			GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
-			BOOL result = result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
+			BOOL result = [_castDeviceManager launchApplication:mediaAppId withLaunchOptions:lauchOptions];
 			
 			if (!result)
 			{
