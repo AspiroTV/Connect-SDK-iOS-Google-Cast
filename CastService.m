@@ -222,7 +222,7 @@
     self.connected = YES;
 	
 	BOOL relaunchIfRunning = NO;
-	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
 		BOOL result = [_castDeviceManager launchApplication:self.castWebAppId withLaunchOptions:lauchOptions];
 		if (!result) {
@@ -240,8 +240,6 @@
 			_castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
 			[_castDeviceManager addChannel:_castPrivateChannel];
 		}
-		
-		dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; });
 	});
 }
 
@@ -270,6 +268,8 @@
     [_launchSuccessBlocks removeObjectForKey:applicationMetadata.applicationID];
     [_launchFailureBlocks removeObjectForKey:applicationMetadata.applicationID];
     _launchingAppId = nil;
+	
+	dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; }); //moved here from deviceManagerDidConnect: method for proper work
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didDisconnectFromApplicationWithError:(NSError *)error
