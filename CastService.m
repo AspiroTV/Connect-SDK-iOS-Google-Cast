@@ -29,6 +29,7 @@
 @interface CastService () <ServiceCommandDelegate>
 
 @property (nonatomic, retain) GCKCastChannel *castPrivateChannel;
+@property (nonatomic, assign) BOOL abortConnection;
 
 @end
 
@@ -142,6 +143,7 @@
 
 - (void)connect
 {
+	DLog();
     if (self.connected)
         return;
 
@@ -159,16 +161,22 @@
         _castDeviceManager = [[GCKDeviceManager alloc] initWithDevice:_castDevice clientPackageName:clientPackageName];
         _castDeviceManager.delegate = self;
     }
+	self.abortConnection = NO;
     
     [_castDeviceManager connect];
 }
 
 - (void)disconnect
 {
+	DLog();
+	self.abortConnection = YES;
 	[self disconnect:nil];
 }
 
 - (void)disconnectAndTerminateApplication {
+	DLog();
+	self.abortConnection = YES;
+
 	if (!self.connected)
 		return;
 	
@@ -183,6 +191,7 @@
 
 - (void)disconnect:(NSError *)error
 {
+	DLog();
     if (!self.connected && !error)
         return;
 
@@ -213,6 +222,15 @@
     return UID;
 }
 
+- (void)checkToAbortConnection {
+	DLog();
+	if (self.abortConnection) {
+		DLog(@"CONNECTION SHOULD BE ABORTED, PERFORMING DISCONNECT");
+		[self disconnectAndTerminateApplication];
+		return;
+	}
+}
+
 #pragma mark - GCKDeviceManagerDelegate
 
 - (void)deviceManagerDidConnect:(GCKDeviceManager *)deviceManager
@@ -220,9 +238,13 @@
     DLog(@"connected");
 
     self.connected = YES;
+	[self checkToAbortConnection];
 	
 	BOOL relaunchIfRunning = NO;
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		DLog(@"EXECUTING LAUNCH CASTING APPLICATION BLOCK");
+		[self checkToAbortConnection];
+		
 		GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
 		BOOL result = [_castDeviceManager launchApplication:self.castWebAppId withLaunchOptions:lauchOptions];
 		if (!result) {
@@ -246,6 +268,8 @@
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didConnectToCastApplication:(GCKApplicationMetadata *)applicationMetadata sessionID:(NSString *)sessionID launchedApplication:(BOOL)launchedApplication
 {
     DLog(@"%@ (%@)", applicationMetadata.applicationName, applicationMetadata.applicationID);
+	
+	[self checkToAbortConnection];
 
     _currentAppId = applicationMetadata.applicationID;
 
