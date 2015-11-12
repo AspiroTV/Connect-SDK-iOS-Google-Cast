@@ -359,6 +359,8 @@
 {
     DLog(@"volume: %f isMuted: %d", volumeLevel, isMuted);
 
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastDeviceVolumeChange" object:@(volumeLevel)];
+	
     _currentVolumeLevel = volumeLevel;
     _currentMuteStatus = isMuted;
 
