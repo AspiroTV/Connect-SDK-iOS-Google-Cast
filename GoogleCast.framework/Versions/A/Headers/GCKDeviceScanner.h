@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 @class GCKDevice;
 @class GCKFilterCriteria;
@@ -40,9 +40,9 @@ GCK_EXPORT
 
 /**
  * Constructs a new GCKDeviceScanner.
- * @deprecated {Use @link #initWithFilterCriteria: @endlink instead.}
+ * @deprecated {Use @link #initWithFilterCriteria: @endlink instead, do not use without a criteria.}
  */
-- (instancetype)init GCK_DEPRECATED;
+- (instancetype)init GCK_DEPRECATED("Use initWithFilterCriteria, do not use without a criteria");
 
 /**
  * Designated initializer. Constructs a new GCKDeviceScanner with the given filter criteria.

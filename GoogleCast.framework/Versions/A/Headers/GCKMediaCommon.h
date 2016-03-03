@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * @enum GCKMediaControlChannelResumeState
@@ -49,3 +49,10 @@ typedef NS_ENUM(NSInteger, GCKMediaRepeatMode) {
    */
   GCKMediaRepeatModeAllAndShuffle = 4,
 };
+
+/**
+ * A constant indicating an invalid time interval. May be passed to methods which accept optional
+ * stream positions or time durations.
+ */
+GCK_EXTERN
+const NSTimeInterval kGCKInvalidTimeInterval;

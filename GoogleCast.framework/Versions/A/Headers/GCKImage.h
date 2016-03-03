@@ -1,6 +1,6 @@
 // Copyright 2013 Google Inc.
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * A class that represents an image that is located on a web server.

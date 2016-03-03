@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 @class GCKMediaInformation;
 @class GCKMediaQueueItemBuilder;
@@ -38,12 +38,22 @@ GCK_EXPORT
  */
 @property(nonatomic, readonly) BOOL autoplay;
 
-/** The start time of the item, in seconds. The default value is 0. */
+/**
+ * The start time of the item, in seconds. The default value is <code>kInvalidTimeInterval</code>,
+ * indicating that no start time has been set.
+ */
 @property(nonatomic, readonly) NSTimeInterval startTime;
 
 /**
+ * The playback duration for the item, in seconds, or <code>INFINITY</code> if the stream's actual
+ * duration should be used.
+ */
+@property(nonatomic, readonly) NSTimeInterval playbackDuration;
+
+/**
  * How long before the previous item ends, in seconds, before the receiver should start
- * preloading this item. The default value is 0.
+ * preloading this item. The default value is <code>kInvalidTimeInterval</code>, indicating that no
+ * preload time has been set.
  */
 @property(nonatomic, readonly) NSTimeInterval preloadTime;
 
@@ -54,13 +64,16 @@ GCK_EXPORT
 @property(nonatomic, strong, readonly) id customData;
 
 /**
- * Designated initializer. Constructs a new GCKMediaQueueItem with the given attributes. See the
- * documentation of the corresponding properties for more information.
+ * Constructs a new GCKMediaQueueItem with the given attributes. See the documentation of the
+ * corresponding properties for more information.
  *
  * @param mediaInformation The media information for the item.
  * @param autoplay The autoplay state for this item.
- * @param startTime The start time of the item, in seconds.
- * @param preloadTime The preload time for the item, in seconds.
+ * @param startTime The start time of the item, in seconds. May be
+ * <code>kInvalidTimeInterval</code> if this item refers to a live stream or if the default start
+ * time should be used.
+ * @param preloadTime The preload time for the item, in seconds. May be
+ * <code>kInvalidTimeInterval</code> to indicate no preload time.
  * @param activeTrackIDs The active track IDs for the item. May be <code>nil</code>.
  * @param customData Any custom data to associate with the item. May be <code>nil</code>.
  */
@@ -70,6 +83,29 @@ GCK_EXPORT
                              preloadTime:(NSTimeInterval)preloadTime
                           activeTrackIDs:(NSArray *)activeTrackIDs
                               customData:(id)customData;
+
+/**
+ * Designated initializer. Constructs a new GCKMediaQueueItem with the given attributes. See the
+ * documentation of the corresponding properties for more information.
+ *
+ * @param mediaInformation The media information for the item.
+ * @param autoplay The autoplay state for this item.
+ * @param startTime The start time of the item, in seconds. May be
+ * <code>kInvalidTimeInterval</code> if this item refers to a live stream or if the default start
+ * time should be used.
+ * @param playbackDuration The playback duration of the item, in seconds. May be
+ * <code>kInvalidTimeInterval</code> to indicate no preload time.
+ * @param preloadTime The preload time for the item, in seconds.
+ * @param activeTrackIDs The active track IDs for the item. May be <code>nil</code>.
+ * @param customData Any custom data to associate with the item. May be <code>nil</code>.
+ */
+- (instancetype)initWithMediaInformation:(GCKMediaInformation *)mediaInformation
+                                autoplay:(BOOL)autoplay
+                               startTime:(NSTimeInterval)startTime
+                        playbackDuration:(NSTimeInterval)playbackDuration
+                             preloadTime:(NSTimeInterval)preloadTime
+                          activeTrackIDs:(NSArray *)activeTrackIDs
+                              customData:(id)customData /*NS_DESIGNATED_INITIALIZER*/;
 
 /**
  * Clears (unassigns) the item ID. Should be called in order to reuse an existing instance, for
@@ -101,12 +137,23 @@ GCK_EXPORT
  */
 @property(nonatomic, readwrite) BOOL autoplay;
 
-/** The start time of the item, in seconds. The default value is 0. */
+/**
+ * The start time of the item, in seconds. The default value is <code>kInvalidTimeInterval</code>,
+ * indicating that a start time does not apply (e.g., for a live stream) or that the default start
+ * time should be used.
+ */
 @property(nonatomic, readwrite) NSTimeInterval startTime;
 
 /**
+ * The playback duration for the item, in seconds, or <code>INFINITY</code> if the stream's actual
+ * duration should be used.
+ */
+@property(nonatomic, readwrite) NSTimeInterval playbackDuration;
+
+/**
  * How long before the previous item ends, in seconds, before the receiver should start
- * preloading this item. The default value is 0.
+ * preloading this item. The default value is <code>kInvalidTimeInterval</code>, indicating no
+ * preload time.
  */
 @property(nonatomic, readwrite) NSTimeInterval preloadTime;
 

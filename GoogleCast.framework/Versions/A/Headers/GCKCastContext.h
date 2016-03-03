@@ -1,8 +1,8 @@
 // Copyright 2015 Google Inc.
 
-#import "GCKDefines.h"
-
 #import <Foundation/Foundation.h>
+
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * A class containing global objects and state for the Cast SDK.

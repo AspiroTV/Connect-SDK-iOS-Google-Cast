@@ -2,8 +2,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKCastChannel.h"
-#import "GCKDefines.h"
+#import <GoogleCast/GCKCastChannel.h>
+#import <GoogleCast/GCKDefines.h>
 
 @protocol GCKGenericChannelDelegate;
 

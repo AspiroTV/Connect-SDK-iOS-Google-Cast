@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 typedef NS_ENUM(NSInteger, GCKSenderApplicationInfoPlatform) {
   GCKSenderApplicationInfoPlatformAndroid = 1,

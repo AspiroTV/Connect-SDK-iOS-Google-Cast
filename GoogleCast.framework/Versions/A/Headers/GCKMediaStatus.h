@@ -2,8 +2,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
-#import "GCKMediaCommon.h"
+#import <GoogleCast/GCKDefines.h>
+#import <GoogleCast/GCKMediaCommon.h>
 
 @class GCKMediaInformation;
 @class GCKMediaQueueItem;
@@ -194,5 +194,11 @@ GCK_EXPORT
  * Returns the item with the given item ID in the playback queue.
  */
 - (GCKMediaQueueItem *)queueItemWithItemID:(NSUInteger)itemID;
+
+/**
+ * Returns the index of the item with the given item ID in the playback queue, or -1 if there is
+ * no such item in the queue.
+ */
+- (NSInteger)queueIndexForItemID:(NSUInteger)itemID;
 
 @end

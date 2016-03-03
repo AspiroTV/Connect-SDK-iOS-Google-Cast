@@ -6,7 +6,7 @@
 #include <AppKit/NSColor.h>
 #endif
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * A class that represents an RGBA color.

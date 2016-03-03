@@ -1,6 +1,6 @@
 // Copyright 2013 Google Inc.
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 @class GCKMediaMetadata;
 @class GCKMediaTextTrackStyle;

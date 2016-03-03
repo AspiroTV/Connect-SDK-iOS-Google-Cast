@@ -1,7 +1,7 @@
 // Copyright 2013 Google Inc.
 
-#import "GCKCastChannel.h"
-#import "GCKMediaCommon.h"
+#import <GoogleCast/GCKCastChannel.h>
+#import <GoogleCast/GCKMediaCommon.h>
 
 @class GCKMediaInformation;
 @class GCKMediaQueueItem;
@@ -17,17 +17,24 @@
 
 /**
  * The receiver application ID for the Default Media Receiver.
- *
- * Any operations which apply to a currently active stream (play, pause, seek, stop, etc) require
+ * <p>
+ * Any operations which apply to a currently active stream (play, pause, seek, stop, etc.) require
  * a valid (that is, non-nil) media status, or they will return kGCKInvalidRequestID and will
  * not send the request. A media status is requested automatically when the channel connects, is
  * included with a successful load completed respose, and can also be updated at any time.
  * The media status can also become nil at any time; this will happen if the channel is
- * temporarily disconnected, for example.
+ * temporarily disconnected, for example. When using this channel, media status changes should be
+ * monitored via the <code>mediaControlChannelDidUpdateStatus:</code> delegate callback, and
+ * methods which act on streams should be called only while the media status is non-nil.
+ * <p>
+ * If a request is successfully started, the corresponding method returns the request ID that was
+ * assigned to that request. If the request fails to start, the method returns
+ * <code>kGCKInvalidRequestID</code> and sets the <code>lastError</code> property to indicate the
+ * reason for the failure. If a request is successfully started but ultimately fails, the
+ * <code>mediaControlChannel:requestDidFailWithID:error:</code> delegate callback will be invoked
+ * to indicate the failure.
+ * <p>
  *
- * In general when using this channel, media status changes should be monitored with
- * |mediaControlChannelDidUpdateStatus:|, and methods which act on streams should be called only
- * while the media status is non-nil.
  */
 GCK_EXTERN NSString *const kGCKMediaDefaultReceiverApplicationID;
 
@@ -43,6 +50,12 @@ GCK_EXPORT
  * The media status for the currently loaded media, if any; otherwise <code>nil</code>.
  */
 @property(nonatomic, strong, readonly) GCKMediaStatus *mediaStatus;
+
+/**
+ * The error detail from the last request, if any, or <code>nil</code> if the last request was
+ * successful.
+ */
+@property(nonatomic, copy, readonly) GCKError *lastError;
 
 /**
  * The delegate for receiving notifications about changes in the channel's state.
@@ -166,6 +179,7 @@ GCK_EXPORT
 
 /**
  * Stops playback of the current media item. Request will fail if there is no current media status.
+ * If a queue is currently loaded, it is removed.
  *
  * @return The request ID, or kGCKInvalidRequestID if the message could not be sent.
  */
@@ -173,6 +187,7 @@ GCK_EXPORT
 
 /**
  * Stops playback of the current media item. Request will fail if there is no current media status.
+ * If a queue is currently loaded, it is removed.
  *
  * @param customData Custom application-specific data to pass along with the request. Must either
  * be an object that can be serialized to JSON using NSJSONSerialization, or nil.
@@ -261,6 +276,27 @@ GCK_EXPORT
                  customData:(id)customData;
 
 /**
+ * Loads and optionally starts playback of a new queue of media items.
+ *
+ * @param queueItems An array of GCKMediaQueueItem%s to load. Must not be nil or empty.
+ * @param startIndex The index of the item in the items array that should be played first.
+ * @param playPosition The initial playback position for the item when it is first played,
+ * relative to the beginning of the stream. This value is ignored when the same item is played
+ * again, e.g. when the queue repeats, or the item is later jumped to. In those cases the item's
+ * startTime is used.
+ * @param repeatMode The repeat mode for playing the queue.
+ * @param customData Custom application-specific data to pass along with the request. Must either
+ * be an object that can be serialized to JSON using NSJSONSerialization, or nil.
+ * @return The request ID for this request, or kGCKInvalidRequestID if the message could not be
+ * sent or if any of the parameters are invalid.
+ */
+- (NSInteger)queueLoadItems:(NSArray *)queueItems
+                 startIndex:(NSUInteger)startIndex
+               playPosition:(NSTimeInterval)playPosition
+                 repeatMode:(GCKMediaRepeatMode)repeatMode
+                 customData:(id)customData;
+
+/**
  * Inserts a list of new media items into the queue.
  *
  * @param queueItems An array of GCKMediaQueueItem%s to insert. Must not be nil or empty.
@@ -301,6 +337,40 @@ GCK_EXPORT
  */
 - (NSInteger)queueInsertItem:(GCKMediaQueueItem *)item
             beforeItemWithID:(NSUInteger)beforeItemID;
+
+/**
+ * A convenience method that inserts a single item into the queue and makes it the current item.
+ *
+ * @param item The item to insert.
+ * @param beforeItemID The ID of the item that will be located immediately after the inserted item.
+ * If the value is kGCKMediaQueueInvalidItemID, or does not refer to any item currently in the
+ * queue, the inserted item will be appended to the end of the queue.
+ * @return The request ID for this request, or kGCKInvalidRequestID if the message could not be
+ * sent or if any of the parameters are invalid.
+ */
+- (NSInteger)queueInsertAndPlayItem:(GCKMediaQueueItem *)item
+                   beforeItemWithID:(NSUInteger)beforeItemID;
+
+/**
+ * A convenience method that inserts a single item into the queue and makes it the current item.
+ *
+ * @param item The item to insert.
+ * @param beforeItemID The ID of the item that will be located immediately after the inserted item.
+ * If the value is kGCKMediaQueueInvalidItemID, or does not refer to any item currently in the
+ * queue, the inserted item will be appended to the end of the queue.
+ * @param playPosition The initial playback position for the item when it is first played,
+ * relative to the beginning of the stream. This value is ignored when the same item is played
+ * again, e.g. when the queue repeats, or the item is later jumped to. In those cases the item's
+ * startTime is used.
+ * @param customData Custom application-specific data to pass along with the request. Must either
+ * be an object that can be serialized to JSON using NSJSONSerialization, or nil.
+ * @return The request ID for this request, or kGCKInvalidRequestID if the message could not be
+ * sent or if any of the parameters are invalid.
+ */
+- (NSInteger)queueInsertAndPlayItem:(GCKMediaQueueItem *)item
+                   beforeItemWithID:(NSUInteger)beforeItemID
+                       playPosition:(NSTimeInterval)playPosition
+                         customData:(id)customData;
 
 /**
  * Updates the queue.
@@ -420,6 +490,23 @@ GCK_EXPORT
  * sent.
  */
 - (NSInteger)queueJumpToItemWithID:(NSUInteger)itemID
+                        customData:(id)customData;
+
+/**
+ * Jumps to the item with the specified ID in the queue.
+ *
+ * @param itemID The ID of the item to jump to.
+ * @param playPosition The initial playback position for the item when it is first played,
+ * relative to the beginning of the stream. This value is ignored when the same item is played
+ * again, e.g. when the queue repeats, or the item is later jumped to. In those cases the item's
+ * startTime is used.
+ * @param customData Custom application-specific data to pass along with the request. Must either
+ * be an object that can be serialized to JSON using NSJSONSerialization, or nil.
+ * @return The request ID for this request, or kGCKInvalidRequestID if the message could not be
+ * sent.
+ */
+- (NSInteger)queueJumpToItemWithID:(NSUInteger)itemID
+                      playPosition:(NSTimeInterval)playPosition
                         customData:(id)customData;
 
 /**

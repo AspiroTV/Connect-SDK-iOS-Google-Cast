@@ -1,6 +1,6 @@
 // Copyright 2014 Google Inc.
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * @file GCKMediaTrack.h
