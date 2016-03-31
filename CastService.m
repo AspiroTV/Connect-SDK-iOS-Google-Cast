@@ -308,7 +308,12 @@
         [_launchSuccessBlocks removeObjectForKey:_launchingAppId];
         [_launchFailureBlocks removeObjectForKey:_launchingAppId];
         _launchingAppId = nil;
-    }
+	} else {
+		dispatch_on_main(^{
+			[self disconnect:[NSError errorWithDomain:ConnectErrorDomain code:0 userInfo:nil]];
+		});
+		return;
+	}
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didFailToConnectWithError:(NSError *)error
