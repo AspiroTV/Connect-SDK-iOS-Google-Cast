@@ -261,6 +261,8 @@
     webAppSession.metadata = applicationMetadata;
 
     [_sessions setObject:webAppSession forKey:applicationMetadata.applicationID];
+    
+    _castMediaControlChannel.delegate = webAppSession;
 
     if (success)
         dispatch_on_main(^{ success(webAppSession); });
@@ -401,57 +403,19 @@
 
 - (void)displayImage:(NSURL *)imageURL iconURL:(NSURL *)iconURL title:(NSString *)title description:(NSString *)description mimeType:(NSString *)mimeType success:(MediaPlayerDisplaySuccessBlock)success failure:(FailureBlock)failure
 {
-    GCKMediaMetadata *metaData = [[GCKMediaMetadata alloc] initWithMetadataType:GCKMediaMetadataTypePhoto];
-    [metaData setString:title forKey:kGCKMetadataKeyTitle];
-    [metaData setString:description forKey:kGCKMetadataKeySubtitle];
-
-    if (iconURL)
-    {
-        GCKImage *iconImage = [[GCKImage alloc] initWithURL:iconURL width:100 height:100];
-        [metaData addImage:iconImage];
-    }
-    
-    GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:imageURL.absoluteString streamType:GCKMediaStreamTypeNone contentType:mimeType metadata:metaData streamDuration:0 customData:nil];
-
-    [self playMedia:mediaInformation webAppId:self.castWebAppId success:^(MediaLaunchObject *mediaLanchObject) {
-        success(mediaLanchObject.session,mediaLanchObject.mediaControl);
-    } failure:failure];
+//
 }
 
 - (void) displayImage:(MediaInfo *)mediaInfo
               success:(MediaPlayerDisplaySuccessBlock)success
               failure:(FailureBlock)failure
 {
-    NSURL *iconURL;
-    if(mediaInfo.images){
-        ImageInfo *imageInfo = [mediaInfo.images firstObject];
-        iconURL = imageInfo.url;
-    }
-    
-    [self displayImage:mediaInfo.url iconURL:iconURL title:mediaInfo.title description:mediaInfo.description mimeType:mediaInfo.mimeType success:success failure:failure];
+//
 }
 
 - (void) displayImageWithMediaInfo:(MediaInfo *)mediaInfo success:(MediaPlayerSuccessBlock)success failure:(FailureBlock)failure
 {
-    NSURL *iconURL;
-    if(mediaInfo.images){
-        ImageInfo *imageInfo = [mediaInfo.images firstObject];
-        iconURL = imageInfo.url;
-    }
-    
-    GCKMediaMetadata *metaData = [[GCKMediaMetadata alloc] initWithMetadataType:GCKMediaMetadataTypePhoto];
-    [metaData setString:mediaInfo.title forKey:kGCKMetadataKeyTitle];
-    [metaData setString:mediaInfo.description forKey:kGCKMetadataKeySubtitle];
-    
-    if (iconURL)
-    {
-        GCKImage *iconImage = [[GCKImage alloc] initWithURL:iconURL width:100 height:100];
-        [metaData addImage:iconImage];
-    }
-    
-    GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:mediaInfo.url.absoluteString streamType:GCKMediaStreamTypeNone contentType:mediaInfo.mimeType metadata:metaData streamDuration:0 customData:nil];
-    
-    [self playMedia:mediaInformation webAppId:self.castWebAppId success:success failure:failure];
+//
 }
 
 - (void) playMedia:(NSURL *)videoURL iconURL:(NSURL *)iconURL title:(NSString *)title description:(NSString *)description mimeType:(NSString *)mimeType shouldLoop:(BOOL)shouldLoop success:(MediaPlayerDisplaySuccessBlock)success failure:(FailureBlock)failure
@@ -547,7 +511,9 @@
 				}
 			} else {
 				if (success) {
-					success(nil);
+                    CastWebAppSession *webAppSession = [_sessions objectForKey:_currentAppId];
+                    MediaLaunchObject *launchObject = [[MediaLaunchObject alloc] initWithLaunchSession:webAppSession.launchSession andMediaControl:webAppSession.mediaControl];
+                    success(launchObject);
 				}
 			}
 		});
@@ -618,7 +584,9 @@
 				}
 			} else {
 				if (success) {
-					success(nil);
+                    CastWebAppSession *webAppSession = [_sessions objectForKey:_currentAppId];
+                    MediaLaunchObject *launchObject = [[MediaLaunchObject alloc] initWithLaunchSession:webAppSession.launchSession andMediaControl:webAppSession.mediaControl];
+                    success(launchObject);
 				}
 			}
 		});
