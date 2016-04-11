@@ -45,9 +45,20 @@
         
         _deviceScanner = [GCKDeviceScanner new];
         [_deviceScanner addListener:self];
+        
+        [self deviceStatusFix];
     }
     
     return self;
+}
+
+- (void)deviceStatusFix {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    id customManager = NSClassFromString(@"HACastDevicesManager");
+    customManager = [customManager performSelector:NSSelectorFromString(@"sharedInstance")];
+    [customManager performSelector:NSSelectorFromString(@"setupChromecastScanner:") withObject:_deviceScanner];
+#pragma clang diagnostic pop
 }
 
 - (void)startDiscovery
