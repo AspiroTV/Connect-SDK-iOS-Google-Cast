@@ -239,8 +239,19 @@
 		if (channelClass) {
 			_castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
 			[_castDeviceManager addChannel:_castPrivateChannel];
+            [self deviceChannelFix];
 		}
 	});
+}
+
+
+- (void)deviceChannelFix {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    id customManager = NSClassFromString(@"HACastDevicesManager");
+    customManager = [customManager performSelector:NSSelectorFromString(@"sharedInstance")];
+    [customManager performSelector:NSSelectorFromString(@"setupChromecastChannel:") withObject:_castPrivateChannel];
+#pragma clang diagnostic pop
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didConnectToCastApplication:(GCKApplicationMetadata *)applicationMetadata sessionID:(NSString *)sessionID launchedApplication:(BOOL)launchedApplication
