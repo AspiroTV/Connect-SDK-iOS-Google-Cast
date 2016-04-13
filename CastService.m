@@ -494,6 +494,13 @@
 	[metaData setString:contentDetails.encryptedUsername forKey:@"encrypted_username"];
 	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
 	[metaData setString:contentDetails.config forKey:@"config"];
+    
+    if (contentDetails.selectedAudio) {
+        [metaData setString:contentDetails.selectedAudio forKey:@"selectedAudio"];
+    }
+    if (contentDetails.selectedSubtitle) {
+        [metaData setString:contentDetails.selectedSubtitle forKey:@"selectedSubtitle"];
+    }
 	
 	if (contentDetails.contentImage)
 	{
