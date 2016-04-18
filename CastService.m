@@ -157,9 +157,9 @@
         NSString *clientPackageName = [info objectForKey:@"CFBundleIdentifier"];
         
         _castDeviceManager = [[GCKDeviceManager alloc] initWithDevice:_castDevice clientPackageName:clientPackageName];
-        _castDeviceManager.delegate = self;
     }
     
+    _castDeviceManager.delegate = self;
     [_castDeviceManager connect];
 }
 
@@ -174,6 +174,7 @@
 	
 	self.connected = NO;
 	
+    _castDeviceManager.delegate = nil;
 	[_castDeviceManager stopApplication];
 	[_castDeviceManager disconnect];
 	
@@ -188,6 +189,7 @@
 
     self.connected = NO;
 
+    _castDeviceManager.delegate = nil;
     [_castDeviceManager leaveApplication];
     [_castDeviceManager disconnect];
 
@@ -295,6 +297,9 @@
 	}
 	
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastDeviceApplicationDisconnected" object:nil userInfo:dict];
+    
+    _castDeviceManager.delegate = nil;
+    [_castDeviceManager disconnect];
 
     if (!_currentAppId)
         return;
