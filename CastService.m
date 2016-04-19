@@ -151,6 +151,10 @@
         _castDevice = [[GCKDevice alloc] initWithIPAddress:self.serviceDescription.address servicePort:devicePort];
     }
     
+    _castMediaControlChannel.delegate = nil;
+    _castMediaControlChannel = nil;
+    _castDeviceManager = nil;
+    
     if (!_castDeviceManager)
     {
         NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
