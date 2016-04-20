@@ -302,6 +302,7 @@
 	
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastDeviceApplicationDisconnected" object:nil userInfo:dict];
     
+    self.connected = NO;
     _castDeviceManager.delegate = nil;
     [_castDeviceManager disconnect];
 
