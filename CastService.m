@@ -167,6 +167,11 @@
     [_castDeviceManager connect];
 }
 
+- (void)reconnect {
+    self.isReconnect = YES;
+    [self connect];
+}
+
 - (void)disconnect
 {
 	[self disconnect:nil];
@@ -177,6 +182,7 @@
 		return;
 	
 	self.connected = NO;
+    self.isReconnect = NO;
 	
     _castDeviceManager.delegate = nil;
 	[_castDeviceManager stopApplication];
@@ -192,6 +198,7 @@
         return;
 
     self.connected = NO;
+    self.isReconnect = NO;
 
     _castDeviceManager.delegate = nil;
     [_castDeviceManager leaveApplication];
@@ -226,6 +233,23 @@
     DLog(@"connected");
 
     self.connected = YES;
+    
+    if (self.isReconnect) {
+        self.isReconnect = NO;
+        dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; });
+        
+        _castMediaControlChannel = [[GCKMediaControlChannel alloc] init];
+        [_castDeviceManager addChannel:_castMediaControlChannel];
+        
+        Class channelClass = NSClassFromString(@"HACastChannel");
+        if (channelClass) {
+            _castPrivateChannel = [[channelClass alloc] initWithNamespace:@""];
+            [_castDeviceManager addChannel:_castPrivateChannel];
+            [self deviceChannelFix];
+        }
+        
+        return;
+    }
 	
 	BOOL relaunchIfRunning = NO;
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -303,6 +327,7 @@
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastDeviceApplicationDisconnected" object:nil userInfo:dict];
     
     self.connected = NO;
+    self.isReconnect = NO;
     _castDeviceManager.delegate = nil;
     [_castDeviceManager disconnect];
 
@@ -404,6 +429,7 @@
     DLog(@"%@", error.localizedDescription);
 
     self.connected = NO;
+    self.isReconnect = NO;
     
     _castMediaControlChannel.delegate = nil;
     _castMediaControlChannel = nil;
