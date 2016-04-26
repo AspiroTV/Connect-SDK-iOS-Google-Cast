@@ -617,14 +617,7 @@
 		if (failure)
 			[_launchFailureBlocks setObject:failure forKey:mediaAppId];
 		
-		BOOL relaunchIfRunning = NO;
-		
-		if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && [mediaAppId isEqualToString:_currentAppId])
-			relaunchIfRunning = NO;
-		else
-			relaunchIfRunning = YES;
-		
-		relaunchIfRunning = NO; //since we need to join our app (if it's running)
+		BOOL relaunchIfRunning = NO; //since we need to join our app (if it's running)
 
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 			GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
@@ -690,14 +683,7 @@
 		if (failure)
 			[_launchFailureBlocks setObject:failure forKey:mediaAppId];
 		
-		BOOL relaunchIfRunning = NO;
-		
-		if ((_castDeviceManager.applicationConnectionState == GCKConnectionStateConnected) && [mediaAppId isEqualToString:_currentAppId])
-			relaunchIfRunning = NO;
-		else
-			relaunchIfRunning = YES;
-		
-		relaunchIfRunning = NO; //since we need to join our app (if it's running)
+		BOOL relaunchIfRunning = NO; //since we need to join our app (if it's running)
 		
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 			GCKLaunchOptions *lauchOptions = [[GCKLaunchOptions alloc] initWithRelaunchIfRunning:relaunchIfRunning];
