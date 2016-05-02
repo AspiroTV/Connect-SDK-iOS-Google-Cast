@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /** @file GCKError.h
  *  Error codes
@@ -66,6 +66,17 @@ typedef NS_ENUM(NSInteger, GCKErrorCode) {
   GCKErrorCodeInvalidState = 9,
 
   /**
+   * Error code indicating that data could not be sent because the send buffer is full.
+   */
+  GCKErrorCodeSendBufferFull = 10,
+
+  /**
+   * Error indicating that the request could not be sent because the message exceeds the maximum
+   * allowed message size.
+   */
+  GCKErrorCodeMessageTooBig = 11,
+
+  /**
    * Error code indicating that a requested application could not be found.
    */
   GCKErrorCodeApplicationNotFound = 20,
@@ -89,6 +100,11 @@ typedef NS_ENUM(NSInteger, GCKErrorCode) {
    * Error code indicating that a media media command failed because of the media player state.
    */
   GCKErrorCodeInvalidMediaPlayerState = 31,
+
+  /**
+   * Error indicating that no media session is currently available.
+   */
+  GCKErrorCodeNoMediaSession = 32,
 
   /**
    * Error code indicating the app entered the background.

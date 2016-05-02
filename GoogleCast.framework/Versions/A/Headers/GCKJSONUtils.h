@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * Utility methods for working with JSON data.

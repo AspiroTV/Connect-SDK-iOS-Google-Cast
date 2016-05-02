@@ -3,7 +3,7 @@
 #import <Availability.h>
 
 #define GCK_EXPORT __attribute__((visibility("default")))
-#define GCK_DEPRECATED __attribute__((deprecated))
+#define GCK_DEPRECATED(message) __attribute__((deprecated(message)))
 
 #ifdef __cplusplus
 #define GCK_EXTERN extern "C" GCK_EXPORT

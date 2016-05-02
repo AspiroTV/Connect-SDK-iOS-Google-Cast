@@ -2,11 +2,11 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * @file GCKCommon.h
- * GCKActiveInputStatus and GCKStandbyStatus enums.
+ * GCKConnectionState, GCKActiveInputStatus, and GCKStandbyStatus enums.
  */
 
 /**
@@ -19,6 +19,21 @@ GCK_EXTERN const NSInteger kGCKInvalidRequestID;
  * A string constant containing the version number of the GoogleCast framework.
  */
 GCK_EXTERN const NSString *kGCKFrameworkVersion;
+
+/**
+ * @enum GCKConnectionState
+ * Enum defining Cast connection states.
+ */
+typedef NS_ENUM(NSInteger, GCKConnectionState) {
+  /** Disconnected from the device or application. */
+  GCKConnectionStateDisconnected = 0,
+  /** Connecting to the device or application. */
+  GCKConnectionStateConnecting = 1,
+  /** Connected to the device or application. */
+  GCKConnectionStateConnected = 2,
+  /** Disconnecting from the device. */
+  GCKConnectionStateDisconnecting = 3
+};
 
 /**
  * @enum GCKActiveInputStatus
@@ -57,6 +72,7 @@ typedef NS_ENUM(NSInteger, GCKStandbyStatus) {
    */
   GCKStandbyStatusActive = 1,
 };
+
 
 #define GCK_ASSERT_MAIN_THREAD() \
   NSAssert([NSThread isMainThread], @"%s must be called on main thread", __PRETTY_FUNCTION__)

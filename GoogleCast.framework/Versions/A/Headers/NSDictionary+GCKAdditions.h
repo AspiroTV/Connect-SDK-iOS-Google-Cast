@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 /**
  * A category that adds some convenience methods to NSDictionary for setting and safely looking up

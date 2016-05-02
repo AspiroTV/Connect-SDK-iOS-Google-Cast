@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKCommon.h"
+#import <GoogleCast/GCKCommon.h>
 
 @class GCKApplicationMetadata;
 @class GCKDevice;
@@ -12,23 +12,8 @@
 
 /**
  * @file GCKDeviceManager.h
- * GCKConnectionState and GCKConnectionSuspendedReason enums.
+ * GCKConnectionSuspendedReason enums.
  */
-
-/**
- * @enum GCKConnectionState
- * Enum defining GCKDeviceManager connection states.
- */
-typedef NS_ENUM(NSInteger, GCKConnectionState) {
-  /** Disconnected from the device or application. */
-  GCKConnectionStateDisconnected = 0,
-  /** Connecting to the device or application. */
-  GCKConnectionStateConnecting = 1,
-  /** Connected to the device or application. */
-  GCKConnectionStateConnected = 2,
-  /** Disconnecting from the device. */
-  GCKConnectionStateDisconnecting = 3
-};
 
 /**
  * @enum GCKConnectionSuspendReason
@@ -47,6 +32,12 @@ typedef NS_ENUM(NSInteger, GCKConnectionSuspendReason) {
  * Controls a Cast device. This class can send messages to, receive messages from, launch, and
  * close applications running on a Cast device. <b>All methods and properties of this class may
  * only be accessed from the main thread.</b>
+ * <p>
+ * The GCKDeviceManager instance must stay in scope as long as a connection to the Cast device is
+ * established or is in the process of being created or torn down. It is safe to release the object
+ * before a connection has been started with @link connect @endlink, or after either the
+ * -[deviceManager:didDisconnectWithError:], -[deviceManager:didSuspendConnectionWithReason:], or
+ * -[deviceManager:didFailToConnectWithError:] delegate callback has been invoked.
  *
  * @ingroup DeviceControl
  */
@@ -68,14 +59,15 @@ GCK_EXPORT
  *
  * @deprecated {Use @link connectionState @endlink.}
  */
-@property(nonatomic, readonly) BOOL isConnected GCK_DEPRECATED;
+@property(nonatomic, readonly) BOOL isConnected GCK_DEPRECATED("Use connectionState");
 
 /**
  * True if the device manager has established a connection to an application on the device.
  *
  * @deprecated {Use @link applicationConnectionState @endlink.}
  */
-@property(nonatomic, readonly) BOOL isConnectedToApp GCK_DEPRECATED;
+@property(nonatomic, readonly) BOOL isConnectedToApp
+GCK_DEPRECATED("Use applicationConnectionState");
 
 /**
  * True if the device manager is disconnected due to a potentially transient event (e.g. the app is
@@ -90,7 +82,7 @@ GCK_EXPORT
  * Reconnection will be attempted for this long in the event that the socket disconnects with a
  * potentially transient error.
  *
- * The default timeout is 10s.
+ * The default timeout is 15s.
  */
 @property(nonatomic) NSTimeInterval reconnectTimeout;
 
@@ -126,7 +118,9 @@ GCK_EXPORT
 
 /**
  * The application session ID for the currently connected receiver application, if any;
- * otherwise <code>nil</code>.
+ * otherwise <code>nil</code>. A new, unique session ID is generated whenever a receiver application
+ * is launched (including when the same application is relaunched) and remains in effect as long as
+ * the receiver application continues running.
  */
 @property(nonatomic, copy, readonly) NSString *applicationSessionID;
 
@@ -252,7 +246,8 @@ GCK_EXPORT
  * @return The request ID, or <code>kGCKInvalidRequestID</code> if the request could not be sent.
  */
 - (NSInteger)launchApplication:(NSString *)applicationID
-             relaunchIfRunning:(BOOL)relaunchIfRunning GCK_DEPRECATED;
+             relaunchIfRunning:(BOOL)relaunchIfRunning
+GCK_DEPRECATED("Use launchApplication:withLaunchOptions:");
 
 /**
  * Joins an application.
@@ -264,10 +259,11 @@ GCK_EXPORT
 - (NSInteger)joinApplication:(NSString *)applicationID;
 
 /**
- * Joins an application with a particular session ID.
+ * Joins an application with a particular application session ID. The request will fail if the
+ * given session ID is no longer active on the receiver.
  *
  * @param applicationID The application ID.
- * @param sessionID The session ID.
+ * @param sessionID The application session ID.
  * @return The request ID, or <code>kGCKInvalidRequestID</code> if the request could not be sent.
  */
 - (NSInteger)joinApplication:(NSString *)applicationID sessionID:(NSString *)sessionID;
@@ -287,9 +283,10 @@ GCK_EXPORT
 - (NSInteger)stopApplication;
 
 /**
- * Stops the application with the given session ID.
+ * Stops the application with the given application session ID. The request will fail if the given
+ * session ID is no longer active on the receiver.
  *
- * @param sessionID The session ID, which must be non-negative.
+ * @param sessionID The application session ID, which may not be <code>nil</code>.
  * @return The request ID, or <code>kGCKInvalidRequestID</code> if the request could not be sent.
  */
 - (NSInteger)stopApplicationWithSessionID:(NSString *)sessionID;
@@ -398,7 +395,7 @@ GCK_EXPORT
  *
  * @param deviceManager The device manager.
  * @param applicationMetadata Metadata about the application.
- * @param sessionID The session ID.
+ * @param sessionID The current application session ID that is active on the receiver.
  * @param launchedApplication <code>YES</code> if the application was launched as part of the
  * connection, or <code>NO</code> if the application was already running and was joined.
  */
@@ -425,6 +422,13 @@ GCK_EXPORT
  */
 - (void)deviceManager:(GCKDeviceManager *)deviceManager
     didDisconnectFromApplicationWithError:(NSError *)error;
+
+/**
+ * Called when a stop application request has completed successfully.
+ *
+ * @param deviceManager The device manager.
+ */
+- (void)deviceManagerDidStopApplication:(GCKDeviceManager *)deviceManager;
 
 /**
  * Called when a stop application request fails.
@@ -497,5 +501,14 @@ GCK_EXPORT
 - (void)deviceManager:(GCKDeviceManager *)deviceManager
               request:(NSInteger)requestID
      didFailWithError:(NSError *)error;
+
+/**
+ * Called when a guest mode connection has been established to the device.
+ *
+ * @param deviceManager The device manager.
+ * @param guestModeDevice The device object for the concrete guest mode device.
+ */
+- (void)deviceManagerDidPair:(GCKDeviceManager *)deviceManager
+         withGuestModeDevice:(GCKDevice *)guestModeDevice;
 
 @end

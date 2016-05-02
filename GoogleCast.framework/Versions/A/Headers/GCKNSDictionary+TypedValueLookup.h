@@ -1,3 +1,3 @@
 // Copyright 2012 Google Inc.
 
-#import "NSDictionary+GCKAdditions.h"
+#import <GoogleCast/NSDictionary+GCKAdditions.h>

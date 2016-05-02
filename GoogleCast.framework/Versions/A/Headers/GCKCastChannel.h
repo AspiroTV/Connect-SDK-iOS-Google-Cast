@@ -2,9 +2,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 @class GCKDeviceManager;
+@class GCKError;
 
 /**
  * A GCKCastChannel is used to send and receive messages that are tagged with a specific
@@ -52,6 +53,16 @@ GCK_EXPORT
  * the channel is not connected, or because the send buffer is too full at the moment).
  */
 - (BOOL)sendTextMessage:(NSString *)message;
+
+/**
+ * Sends a text message on this channel.
+ *
+ * @param message The message.
+ * @param error A pointer at which to store the error result. May be nil.
+ * @return <code>YES</code> on success or <code>NO</code> if the message could not be sent.
+ */
+- (BOOL)sendTextMessage:(NSString *)message
+                  error:(GCKError **)error;
 
 /**
  * Generates a request ID for a new message.

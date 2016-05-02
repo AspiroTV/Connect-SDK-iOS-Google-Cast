@@ -1,6 +1,6 @@
-// GoogleCast Framework v2.7.1
-// Build 2664, generated on 2015-06-22 12:57.
-// Copyright 2013-2015 Google Inc.
+// GoogleCast Framework v2.10.4
+// Build 7889, generated on 2016-03-04 15:55.
+// Copyright 2013-2016 Google Inc.
 
 #import <GoogleCast/GCKApplicationMetadata.h>
 #import <GoogleCast/GCKCastChannel.h>
@@ -13,7 +13,9 @@
 #import <GoogleCast/GCKDeviceScanner.h>
 #import <GoogleCast/GCKError.h>
 #import <GoogleCast/GCKFilterCriteria.h>
+#import <GoogleCast/GCKFrameworkResources.h>
 #import <GoogleCast/GCKGenericChannel.h>
+#import <GoogleCast/GCKGlobalFlags.h>
 #import <GoogleCast/GCKImage.h>
 #import <GoogleCast/GCKJSONUtils.h>
 #import <GoogleCast/GCKLaunchOptions.h>
@@ -29,3 +31,4 @@
 #import <GoogleCast/GCKNSDictionary+TypedValueLookup.h>
 #import <GoogleCast/GCKSenderApplicationInfo.h>
 #import <GoogleCast/NSDictionary+GCKAdditions.h>
+#import <GoogleCast/UIImage+GCKAdditions.h>

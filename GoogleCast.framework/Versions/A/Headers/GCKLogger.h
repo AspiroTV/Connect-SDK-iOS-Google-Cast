@@ -4,14 +4,14 @@
 
 #import <stdarg.h>
 
-#import "GCKDefines.h"
+#import <GoogleCast/GCKDefines.h>
 
 @protocol GCKLoggerDelegate;
 
 /**
- * A singleton object used for logging by the framework. By default, log messages are written to
- * NSLog() in debug builds and are discarded otherwise. If a delegate is assigned, the formatted
- * log messages are passed to the delegate instead.
+ * A singleton object used for logging by the framework. If a delegate is assigned, the formatted
+ * log messages are passed to the delegate. Otherwise, the messages are written using NSLog() in
+ * debug builds and are discarded otherwise.
  *
  * @ingroup Utilities
  */
