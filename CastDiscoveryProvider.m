@@ -45,6 +45,7 @@
         
         _deviceScanner = [GCKDeviceScanner new];
         [_deviceScanner addListener:self];
+        GCKAnalyticsLoggingEnabled = NO;
         
         [self deviceStatusFix];
     }
