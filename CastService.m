@@ -555,7 +555,7 @@
 	
 	if (contentDetails.contentImage)
 	{
-		GCKImage *iconImage = [[GCKImage alloc] initWithURL:[NSURL URLWithString:contentDetails.contentImage] width:100 height:100];
+		GCKImage *iconImage = [[GCKImage alloc] initWithURL:[NSURL URLWithString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] width:100 height:100];
 		[metaData addImage:iconImage];
 	}
 	
