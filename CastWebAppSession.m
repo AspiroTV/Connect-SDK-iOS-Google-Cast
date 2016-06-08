@@ -233,11 +233,15 @@
 
     if (_immediatePlayStateCallback)
     {
-        _immediatePlayStateCallback(playState, idleReason);
+        _immediatePlayStateCallback(playState, idleReason, mediaControlChannel.mediaStatus.mediaInformation);
         _immediatePlayStateCallback = nil;
 	} else {
 		NSLog(@"UNEXPECTED CAST PLAYER STATUS UPDATE");
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastPlayerStateChanged" object:nil userInfo:@{@"playState": @(playState), @"idleReason": @(idleReason)}];
+		if (mediaControlChannel.mediaStatus.mediaInformation) {
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastPlayerStateChanged" object:nil userInfo:@{@"playState": @(playState), @"idleReason": @(idleReason), @"mediaInformation": mediaControlChannel.mediaStatus.mediaInformation}];
+		} else {
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"kCastPlayerStateChanged" object:nil userInfo:@{@"playState": @(playState), @"idleReason": @(idleReason)}];
+		}
     }
 
     if (_playStateSubscription)

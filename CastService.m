@@ -312,7 +312,13 @@
     [_launchFailureBlocks removeObjectForKey:applicationMetadata.applicationID];
     _launchingAppId = nil;
 	
-	dispatch_on_main(^{ [self.delegate deviceServiceConnectionSuccess:self]; }); //moved here from deviceManagerDidConnect: method for proper work
+	dispatch_on_main(^{
+		if ([self.delegate respondsToSelector:@selector(deviceServiceConnectionSuccess:mediaControl:)]) {
+			[self.delegate deviceServiceConnectionSuccess:self mediaControl:webAppSession.mediaControl];
+		} else {
+			[self.delegate deviceServiceConnectionSuccess:self];
+		}
+	});
 }
 
 - (void)deviceManager:(GCKDeviceManager *)deviceManager didDisconnectFromApplicationWithError:(NSError *)error
