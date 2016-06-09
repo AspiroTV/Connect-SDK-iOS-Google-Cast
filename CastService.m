@@ -552,6 +552,10 @@
 	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
 	[metaData setString:contentDetails.config forKey:@"config"];
     
+    [metaData setString:contentDetails.isFFWDisabled forKey:@"isFFWDisabled"];
+    [metaData setString:contentDetails.isTimeshift forKey:@"isTimeshift"];
+    [metaData setString:contentDetails.isLive forKey:@"isLive"];
+    
     if (contentDetails.selectedAudio) {
         [metaData setString:contentDetails.selectedAudio forKey:@"selectedAudio"];
     }
@@ -563,6 +567,7 @@
 	{
 		GCKImage *iconImage = [[GCKImage alloc] initWithURL:[NSURL URLWithString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] width:100 height:100];
 		[metaData addImage:iconImage];
+        [metaData setString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] forKey:@"image_url"];
 	}
 	
 	GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:videoURL.absoluteString streamType:GCKMediaStreamTypeBuffered contentType:@"video/mp4" metadata:metaData streamDuration:1000 customData:nil];
