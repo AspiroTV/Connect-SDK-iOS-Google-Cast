@@ -569,8 +569,9 @@
 		[metaData addImage:iconImage];
         [metaData setString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] forKey:@"image_url"];
 	}
-	
-	GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:videoURL.absoluteString streamType:GCKMediaStreamTypeBuffered contentType:@"video/mp4" metadata:metaData streamDuration:1000 customData:nil];
+    
+    GCKMediaStreamType streamType = [contentDetails.isLive isEqualToString:@"true"] ? GCKMediaStreamTypeLive : GCKMediaStreamTypeBuffered;
+	GCKMediaInformation *mediaInformation = [[GCKMediaInformation alloc] initWithContentID:videoURL.absoluteString streamType:streamType contentType:@"video/mp4" metadata:metaData streamDuration:1000 customData:nil];
 	
 	NSString *receiverID = self.castWebAppId;
 	
