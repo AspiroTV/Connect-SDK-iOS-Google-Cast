@@ -295,7 +295,7 @@
     LaunchSession *launchSession = [LaunchSession launchSessionForAppId:applicationMetadata.applicationID];
     launchSession.name = applicationMetadata.applicationName;
     launchSession.sessionId = sessionID;
-    launchSession.sessionType = LaunchSessionTypeWebApp;
+    launchSession.sessionType = LaunchSessionTypeMedia;
     launchSession.service = self;
 
     CastWebAppSession *webAppSession = [[CastWebAppSession alloc] initWithLaunchSession:launchSession service:self];
@@ -304,6 +304,7 @@
     [_sessions setObject:webAppSession forKey:applicationMetadata.applicationID];
     
     _castMediaControlChannel.delegate = webAppSession;
+    [_castMediaControlChannel requestStatus];
 
     if (success)
         dispatch_on_main(^{ success(webAppSession); });
