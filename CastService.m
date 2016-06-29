@@ -553,7 +553,7 @@
 	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
 	[metaData setString:contentDetails.config forKey:@"config"];
     
-    [metaData setString:contentDetails.isFFWDisabled forKey:@"isFFWDisabled"];
+    [metaData setString:contentDetails.isFFWDisabled forKey:@"isDisableFFW"];
     [metaData setString:contentDetails.isTimeshift forKey:@"isTimeshift"];
     [metaData setString:contentDetails.isLive forKey:@"isLive"];
     
@@ -568,7 +568,6 @@
 	{
 		GCKImage *iconImage = [[GCKImage alloc] initWithURL:[NSURL URLWithString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] width:100 height:100];
 		[metaData addImage:iconImage];
-        [metaData setString:[contentDetails.contentImage stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] forKey:@"image_url"];
 	}
     
     GCKMediaStreamType streamType = [contentDetails.isLive isEqualToString:@"true"] ? GCKMediaStreamTypeLive : GCKMediaStreamTypeBuffered;
