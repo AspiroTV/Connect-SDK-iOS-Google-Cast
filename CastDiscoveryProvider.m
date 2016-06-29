@@ -92,11 +92,6 @@
     if ([_devices objectForKey:device.deviceID])
         return;
 	
-	if (![[device.modelName lowercaseString] isEqualToString:[@"Eureka Dongle" lowercaseString]] &&
-		![[device.modelName lowercaseString] isEqualToString:[@"Chromecast" lowercaseString]]) {
-		return;
-	}
-	
     ServiceDescription *serviceDescription = [ServiceDescription descriptionWithAddress:device.ipAddress UUID:device.deviceID];
     serviceDescription.serviceId = kConnectSDKCastServiceId;
     serviceDescription.friendlyName = device.friendlyName;
