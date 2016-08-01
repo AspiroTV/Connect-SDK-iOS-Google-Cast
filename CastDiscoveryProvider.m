@@ -43,7 +43,8 @@
         _devices = [NSMutableDictionary new];
         _deviceDescriptions = [NSMutableDictionary new];
         
-        _deviceScanner = [GCKDeviceScanner new];
+        GCKFilterCriteria *filterCriteria = [GCKFilterCriteria criteriaForAvailableApplicationWithID:kGCKMediaDefaultReceiverApplicationID];
+        _deviceScanner = [[GCKDeviceScanner alloc] initWithFilterCriteria:filterCriteria];
         [_deviceScanner addListener:self];
         GCKAnalyticsLoggingEnabled = NO;
         
