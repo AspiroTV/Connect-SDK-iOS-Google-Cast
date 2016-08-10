@@ -556,6 +556,10 @@
     [metaData setString:contentDetails.isFFWDisabled forKey:@"isDisableFFW"];
     [metaData setString:contentDetails.isTimeshift forKey:@"isTimeshift"];
     [metaData setString:contentDetails.isLive forKey:@"isLive"];
+	
+	if (contentDetails.deviceId) {
+		[metaData setString:contentDetails.deviceId forKey:@"deviceId"];
+	}
     
     if (contentDetails.selectedAudio) {
         [metaData setString:contentDetails.selectedAudio forKey:@"selectedAudio"];
