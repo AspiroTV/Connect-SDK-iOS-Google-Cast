@@ -518,6 +518,8 @@
 	[metaData setString:contentDetails.encryptedUsername forKey:@"encrypted_username"];
 	[metaData setString:contentDetails.encryptedPassword forKey:@"encrypted_password"];
 	[metaData setString:contentDetails.config forKey:@"config"];
+    [metaData setString:contentDetails.channelAlias forKey:@"channel_alias"];
+    [metaData setString:contentDetails.channelPrograms forKey:@"channel_programs"];
 	
 	if (contentDetails.contentImage)
 	{
