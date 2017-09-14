@@ -560,12 +560,17 @@
 	if (contentDetails.deviceId) {
 		[metaData setString:contentDetails.deviceId forKey:@"deviceId"];
 	}
-    
     if (contentDetails.selectedAudio) {
         [metaData setString:contentDetails.selectedAudio forKey:@"selectedAudio"];
     }
     if (contentDetails.selectedSubtitle) {
         [metaData setString:contentDetails.selectedSubtitle forKey:@"selectedSubtitle"];
+    }
+    if (contentDetails.programData) {
+        [metaData setString:contentDetails.programData forKey:@"programData"];
+    }
+    if (contentDetails.contentType) {
+        [metaData setString:contentDetails.contentType forKey:@"contentType"];
     }
 	
 	if (contentDetails.contentImage)
